@@ -1,15 +1,16 @@
-/*global console:false, clearInterval:false, process:false*/
+/*global console:false, process:false*/
 
 var assert = require( 'assert' );
 
 
 //
-function validate( alerts, report, count ) {
+function validate( time, alerts, report, count ) {
   var util = require( 'util' )
     , inspect = function( obj ) {
         return util.inspect( obj, false, 10, true );
       };
 
+  console.log( "DURATION:", time );
   console.log( "COUNT:", count );
   console.log( "REPORT:", inspect( report ) );
   console.log( "ALERTS:", inspect( alerts ) );
@@ -54,7 +55,7 @@ function validate( alerts, report, count ) {
 
 
 //
-var WINDOW = 1000
+var WINDOW = 250
   , THRESH = 10.25 // entering the eight bucket means we do second gen compaction
   , START = Date.now()
 
@@ -67,17 +68,20 @@ var WINDOW = 1000
   , pushObservation = metrics.make( 'key' )
   , count = 0
 
-  , interval = setInterval( function() {
-      var stable = ( Date.now() - START ) / WINDOW
+  , next = function() {
+      var now = Date.now()
+        , stable = ( now - START ) / WINDOW
         , rand = Math.random();
 
       if( stable > THRESH ) {
-        validate( alerts, metrics.getReport().pop(), count );
-        process.exit();
-        return clearInterval( interval );
+        validate( now - START, alerts, metrics.getReport().pop(), count );
+        return process.exit();
       }
 
       count ++;
       pushObservation( stable / 50 + rand );
-    }, 5 );
+      process.nextTick( next );
+    };
+
+process.nextTick( next );
 

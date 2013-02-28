@@ -1,6 +1,6 @@
 *
 !*.json
 !*.js
+!lib*
 !lint
 !lint*
-!lib*
